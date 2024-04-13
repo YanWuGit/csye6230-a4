@@ -1,18 +1,21 @@
-#include "validator.h";
-#include <pthread.h>;
+#include "validator.h"
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-int sudoku[GRID_SIZE][GRID_SIZE];    // Global sudoku puzzle
-int validation_results[NUM_THREADS]; // Global validation results
+int sudoku[GRID_SIZE][GRID_SIZE];
+int validation_results[NUM_THREADS];
 
 // Helper function to check if all elements in an array are unique
-int are_elements_unique(int elements[], int length)
-{
+int are_elements_unique(int elements[], int length) {
     int checker[GRID_SIZE + 1] = {0}; // Tracker for digits 1-9
 
-    for (int i = 0; i < length; i++)
-    {
-        if (checker[elements[i]] == 1)
-        {
+    for (int i = 0; i < length; i++) {
+        if (elements[i] < 1 || elements[i] > GRID_SIZE) {
+            // Element out of valid range (1-9)
+            return 0;
+        }
+        if (checker[elements[i]] == 1) {
             // Duplicate found
             return 0;
         }
@@ -22,14 +25,13 @@ int are_elements_unique(int elements[], int length)
 }
 
 // Thread function to validate a single row
-void *validate_row(void *param)
-{
+void *validate_row(void *param) {
     parameters *p = (parameters *)param;
     int row[GRID_SIZE];
 
+    printf("checking row %d\n", p->row);
     // Copy the row into a local array
-    for (int i = 0; i < GRID_SIZE; i++)
-    {
+    for (int i = 0; i < GRID_SIZE; i++) {
         row[i] = sudoku[p->row][i];
     }
 
@@ -43,14 +45,13 @@ void *validate_row(void *param)
 }
 
 // Thread function to validate a single column
-void *validate_column(void *param)
-{
+void *validate_column(void *param) {
     parameters *p = (parameters *)param;
     int col[GRID_SIZE];
 
+    printf("checking column %d\n", p->column);
     // Copy the column into a local array
-    for (int i = 0; i < GRID_SIZE; i++)
-    {
+    for (int i = 0; i < GRID_SIZE; i++) {
         col[i] = sudoku[i][p->column];
     }
 
@@ -64,21 +65,19 @@ void *validate_column(void *param)
 }
 
 // Thread function to validate a single 3x3 subgrid
-void *validate_subgrid(void *param)
-{
+void *validate_subgrid(void *param) {
     parameters *p = (parameters *)param;
     int subgrid[GRID_SIZE];
     int index = 0;
 
     // Calculate the starting row and column for the 3x3 subgrid
-    int startRow = p->row - (p->row % 3);
-    int startCol = p->column - (p->column % 3);
+    int startRow = p->row;
+    int startCol = p->column;
 
+    printf("checking 3x3 subgrid starting at %d, %d\n", startRow, startCol);
     // Copy the subgrid into a local array
-    for (int i = startRow; i < startRow + 3; i++)
-    {
-        for (int j = startCol; j < startCol + 3; j++)
-        {
+    for (int i = startRow; i < startRow + 3; i++) {
+        for (int j = startCol; j < startCol + 3; j++) {
             subgrid[index++] = sudoku[i][j];
         }
     }
